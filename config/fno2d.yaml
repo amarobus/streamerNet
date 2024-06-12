@@ -1,0 +1,30 @@
+# Data paths
+data:
+  directory: ~/projects/data/streamer_v0
+  train_filename: dataset_128.h5
+  valid_filename: dataset_128.h5
+
+# Input configuration
+input:
+  feature: 'e'
+  t_input: 10
+  T: 10
+
+# Training configuration
+training:
+  batch_size: 10
+  epochs: 1000
+  learning_rate: 0.001
+  log_dir: logs/experiment
+  loss: mse
+  model_name: fno2d_cartesian
+  step: 1
+
+# Model configuration
+model:
+  modes:
+    mode1: 32
+    mode2: 32
+  width: 20
+  depth: 4
+  activation: relu  
