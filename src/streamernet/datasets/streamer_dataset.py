@@ -40,7 +40,6 @@ class StreamerDataset:
                 data = np.float32(f[self.input_feature])
                 output_index = np.int32(f['output_index'])
                 run_number = np.int32(f['run_number'])
-                print(data.shape)
         except Exception as e:
             raise IOError(f"Error loading data from {self.file_path}: {e}")
 
