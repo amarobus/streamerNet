@@ -4,6 +4,9 @@ import numpy as np
 from tqdm import tqdm
 import argparse
 import yaml
+from dotenv import load_dotenv
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 from streamernet.datasets.streamer_dataset import StreamerDataset
 from streamernet.models import FNO2d
@@ -83,6 +86,7 @@ def train(model, train_loader, valid_loader, optimizer, loss_fn, config):
     
     best = np.inf
     T = train_loader.dataset.T
+    t_input = train_loader.dataset.t_input
     step = config['training']['step']
     epochs = config['training']['epochs']
     ntrain = len(train_loader.dataset)
@@ -111,7 +115,40 @@ def train(model, train_loader, valid_loader, optimizer, loss_fn, config):
             print(f'Saving best model with validation loss: {best}')
             torch.save(model.state_dict(), f"checkpoints/{config['training']['model_name']}.pth")
 
-      
+        # Validation plots and logs
+        if args.wandb:
+            idx = 3
+            num_plots = 10
+            if (epoch+1)%5 == 0 or epoch==0:
+                # Compute predictions
+                model.eval()
+                with torch.no_grad():
+                    # Take a batch of data
+                    data_batch = next(iter(valid_loader))
+                    x, y = data_batch
+                    x = x.cuda()
+                    for t in range(0, T, step):
+                        out = model(x)
+                        if t == 0:
+                            pred = out
+                        else:
+                            pred = torch.cat((pred, out), dim=-1)
+                        x = torch.cat((x[..., step:], out), dim=-1)
+
+                plot_validation_results(y, pred, valid_loader, num_plots, idx, epoch)
+                # Log information
+            wandb.log(
+                {
+                    "train_loss_full": train_loss_full,
+                    "train_loss_step": train_loss_step,
+                    "valid_loss_full": valid_loss_full,
+                    "valid_loss_step": valid_loss_step,
+                    "epoch": epoch
+                },
+                commit=True
+            )
+
+
 def training_loop(model, train_loader, optimizer, loss_fn, step):
 
     model.train()
@@ -167,6 +204,67 @@ def feed_forward_sequence(model, x, y, loss_fn, step, T):
     return loss, loss_fn(pred, y)    
 
 
+def plot_validation_results(y, pred, valid_loader, num_plots, idx, epoch):
+
+    T = valid_loader.dataset.T
+    t_input = valid_loader.dataset.t_input
+
+    print('Plotting')
+    # Compute predictions
+
+    pred = pred.cpu().numpy()
+
+    # 2D plots
+    fig = make_subplots(
+        rows=2,
+        cols=num_plots,
+        subplot_titles=[f't + {i+1}' for i in range(num_plots)]
+    )
+
+    color_range = (0, 1)
+    for i in range(2):
+        for j in range(num_plots):
+            if i==0:
+                img = y[idx, ..., j]
+            else:
+                img = pred[idx, ..., j]
+
+            heatmap = go.Heatmap(
+                z=img,
+                colorscale='jet',
+                zmin=color_range[0],
+                zmax=color_range[1],
+                showscale= True if j==num_plots - 1 else False
+            )
+            fig.add_trace(heatmap, row=i+1, col=j+1)
+
+    # Fig title
+    fig.update_layout(title_text=f'Epoch {epoch}: f:[0, {t_input}] -> [{t_input},{t_input+T}]')
+
+    wandb.log({"Validation Plot Epoch": fig}, commit=False)
+
+    # 1D (along r) plots
+    fig = make_subplots(cols=num_plots, subplot_titles=[f't + {i+1}' for i in range(num_plots)])
+    for j in range(num_plots):
+        line = y[idx, :, 64, j]
+        fig.add_trace(go.Scatter(y=line, mode='lines'), row=1, col=j+1)
+        line = pred[idx, :, 64, j]
+        fig.add_trace(go.Scatter(y=line, mode='lines', line=dict(dash='dot')), row=1, col=j+1)
+    fig.update_layout(title_text=f'Epoch {epoch}: f:[0, {t_input}] -> [{t_input},{t_input+T}]')
+    wandb.log({"Validation Plot (along r) 1D Epoch": fig}, commit=False)
+
+    # 1D single (time evolution along z) plot
+    fig = go.Figure()
+    for i in range(num_plots):
+            line = y[idx, 0, :, i]
+            fig.add_trace(go.Scatter(y=line, mode='lines', line=dict(color='gray')))
+            line = pred[idx, 0, :, i]
+            # Plot with dotted line
+            fig.add_trace(go.Scatter(y=line, mode='lines', line=dict(dash='dot')))
+    fig.update_layout(title_text=f'Epoch {epoch}: f:[0, {t_input}] -> [{t_input},{t_input+T}]')
+    wandb.log({"Validation Plot (along r) 1D single Epoch": fig}, commit=False)
+
+
 # Function to read the YAML configuration file
 def read_config(filepath):
     
@@ -180,9 +278,20 @@ if __name__ == '__main__':
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description='Train FNO2d model on streamer discharge samples.')
     parser.add_argument('-i', '--input', type=str, required=True, help='Path to the YAML configuration file')
+    parser.add_argument('-l', '--wandb', action='store_true', help='Use Weights & Biases for logging')
     args = parser.parse_args()
 
     # Read the configuration file
     config = read_config(args.input)
 
-    main()
+    if args.wandb:
+        import wandb
+        wandb.init(project='streamernet', config=config)
+        try:
+            main()
+        except KeyboardInterrupt:
+            print("Interrupted by user. Finishing wandb...")
+        finally:
+            wandb.finish()
+    else:
+        main()
