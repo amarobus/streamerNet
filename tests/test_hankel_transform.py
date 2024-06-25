@@ -5,9 +5,9 @@ from streamernet.operators.hankel_transform import HankelTransform
 class TestHankelTransform:
     @pytest.fixture(autouse=True)
     def setup(self):
-        self.hankel_transform = HankelTransform(n=10, R=1.0) # type: ignore
         self.batch, self.channels, self.nr, self.nz = 2, 3, 10, 5 #type: ignore
         self.f = torch.rand(self.batch, self.channels, self.nr, self.nz).to('cuda') #type: ignore
+        self.hankel_transform = HankelTransform(n=10, R=1.0).to(self.f) # type: ignore
 
     def test_initialization(self):
         assert isinstance(self.hankel_transform, HankelTransform)

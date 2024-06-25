@@ -1,1 +1,2 @@
 from .spectral_conv import SpectralConv2d
+from .cylindrically_symmetric_spectral_conv import CylindricallySymmetricSpectralConv2d

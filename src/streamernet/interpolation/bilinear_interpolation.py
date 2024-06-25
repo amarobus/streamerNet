@@ -42,7 +42,12 @@ class BilinearInterpolation:
         # Expand dimensions for broadcasting
         self.x_idx = x_idx.unsqueeze(-1)
         self.y_idx = y_idx.unsqueeze(0)
-
+        
+    def to(self, tensor):
+        for attr, value in self.__dict__.items():
+            if isinstance(value, torch.Tensor):
+                setattr(self, attr, value.to(tensor))
+        return self
 
     def __call__(self, z_values):
         # Get the z values of the corners surrounding each (x, y) point

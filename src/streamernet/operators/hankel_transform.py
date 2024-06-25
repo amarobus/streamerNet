@@ -23,37 +23,34 @@ class HankelTransform:
         self.jr = self.jr[None,None,...,None]
         self.jv = self.jv[None,None,...,None]
         
-        # Convert to torch tensors        
-        self.T = torch.tensor(self.T)
-        self.jr = torch.tensor(self.jr)
-        self.jv = torch.tensor(self.jv)
+        # By default, scipy returns float64, so we need to cast to float32
+        # Default dtype for torch is float32
+        self.T = torch.tensor(self.T, dtype=torch.float)
+        self.jr = torch.tensor(self.jr, dtype=torch.float)
+        self.jv = torch.tensor(self.jv, dtype=torch.float)
+        self.w = torch.tensor(self.w, dtype=torch.float)
+        self.r = torch.tensor(self.r, dtype=torch.float)
+        self.k = torch.tensor(self.k, dtype=torch.float)
+        self.alpha = torch.tensor(self.alpha, dtype=torch.float)
+        self.S = torch.tensor(self.S, dtype=torch.float)
+        self.V = torch.tensor(self.V, dtype=torch.float)
+        self.R = torch.tensor(self.R, dtype=torch.float)
 
-        self.S = torch.tensor(self.S)
-        self.V = torch.tensor(self.V)
-        self.r = torch.tensor(self.r)
-        self.k = torch.tensor(self.k)
-        self.w = torch.tensor(self.w)
-        self.alpha = torch.tensor(self.alpha)
-
-        device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
-        try:
-            self.to(device)
-        except Exception as e:
-            print(f"Failed to move to device {device}: {e}")
-
-    def to(self, device):
+    def to(self, tensor):
         for attr, value in self.__dict__.items():
             if isinstance(value, torch.Tensor):
-                setattr(self, attr, value.to(device))
+                setattr(self, attr, value.to(tensor))
         return self
 
     def forward(self, f):
+        # Move tensors to the appropriate device and cast them to the correct type
         F1 = f / self.jr
         F2 = torch.einsum('mk,bckz->bcmz', self.T, F1)
         f2 = F2 * self.jv
         return f2
     
     def inverse(self, f):
+        # Move tensors to the appropriate device and cast them to the correct type
         F2 = f / self.jv
         F1 = torch.einsum('mk,bcmz->bckz', self.T, F2)
         f1 = F1 * self.jr
