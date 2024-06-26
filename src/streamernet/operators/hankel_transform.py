@@ -36,10 +36,10 @@ class HankelTransform:
         self.V = torch.tensor(self.V, dtype=torch.float)
         self.R = torch.tensor(self.R, dtype=torch.float)
 
-    def to(self, tensor):
+    def to(self, device):
         for attr, value in self.__dict__.items():
             if isinstance(value, torch.Tensor):
-                setattr(self, attr, value.to(tensor))
+                setattr(self, attr, value.to(device))
         return self
 
     def forward(self, f):

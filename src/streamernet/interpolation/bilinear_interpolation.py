@@ -43,10 +43,10 @@ class BilinearInterpolation:
         self.x_idx = x_idx.unsqueeze(-1)
         self.y_idx = y_idx.unsqueeze(0)
         
-    def to(self, tensor):
+    def to(self, device):
         for attr, value in self.__dict__.items():
             if isinstance(value, torch.Tensor):
-                setattr(self, attr, value.to(tensor))
+                setattr(self, attr, value.to(device))
         return self
 
     def __call__(self, z_values):

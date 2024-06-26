@@ -24,14 +24,14 @@ class CylindricallySymmetricSpectralConv2d(nn.Module):
         self.interp_f = BilinearInterpolation(self.HT.r, z, r, z)
         self.interp_b = BilinearInterpolation(r, z, self.HT.r, z)
         
-    def to(self, tensor):
-        super().to(tensor.device)
+    def to(self, device):
+        super().to(device)
         for attr, value in self.__dict__.items():
             if isinstance(value, torch.Tensor):
-                setattr(self, attr, value.to(tensor.device))
-        self.interp_f.to(tensor.device)
-        self.interp_b.to(tensor.device)
-        self.HT.to(tensor.device)
+                setattr(self, attr, value.to(device))
+        self.interp_f.to(device)
+        self.interp_b.to(device)
+        self.HT.to(device)
         return self
 
     # Complex multiplication

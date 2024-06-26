@@ -41,7 +41,7 @@ class TestCylindricallySymmetricSpectralConv2d:
     def test_forward_pass(self):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.dummy_input = self.dummy_input.to(device=device)
-        self.layer = self.layer.to(self.dummy_input)
+        self.layer = self.layer.to(self.dummy_input.device)
         output = self.layer(self.dummy_input)
         assert output.shape == self.dummy_input.shape
         assert not torch.isnan(output).any(), "Output contains NaNs"
