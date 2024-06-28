@@ -125,37 +125,36 @@ def train(model, train_loader, valid_loader, optimizer, loss_fn, config):
             torch.save(model.state_dict(), f'checkpoints/{config['training']['model_name']}_{wandb.run.id}.pth')
 
         # Validation plots and logs
-        if args.wandb:
-            idx = 3
-            num_plots = 10
-            if (epoch+1)%5 == 0 or epoch==0:
-                # Compute predictions
-                model.eval()
-                with torch.no_grad():
-                    # Take a batch of data
-                    data_batch = next(iter(valid_loader))
-                    x, y = data_batch
-                    x = x.cuda()
-                    for t in range(0, T, step):
-                        out = model(x)
-                        if t == 0:
-                            pred = out
-                        else:
-                            pred = torch.cat((pred, out), dim=-1)
-                        x = torch.cat((x[..., step:], out), dim=-1)
+        idx = 3
+        num_plots = 10
+        if (epoch+1)%5 == 0 or epoch==0:
+            # Compute predictions
+            model.eval()
+            with torch.no_grad():
+                # Take a batch of data
+                data_batch = next(iter(valid_loader))
+                x, y = data_batch
+                x = x.cuda()
+                for t in range(0, T, step):
+                    out = model(x)
+                    if t == 0:
+                        pred = out
+                    else:
+                        pred = torch.cat((pred, out), dim=-1)
+                    x = torch.cat((x[..., step:], out), dim=-1)
 
-                plot_validation_results(y, pred, valid_loader, num_plots, idx, epoch)
-                # Log information
-            wandb.log(
-                {
-                    "train_loss_full": train_loss_full,
-                    "train_loss_step": train_loss_step,
-                    "valid_loss_full": valid_loss_full,
-                    "valid_loss_step": valid_loss_step,
-                    "epoch": epoch
-                },
-                commit=True
-            )
+            plot_validation_results(y, pred, valid_loader, num_plots, idx, epoch)
+            # Log information
+        wandb.log(
+            {
+                "train_loss_full": train_loss_full,
+                "train_loss_step": train_loss_step,
+                "valid_loss_full": valid_loss_full,
+                "valid_loss_step": valid_loss_step,
+                "epoch": epoch
+            },
+            commit=True
+        )
 
 
 def training_loop(model, train_loader, optimizer, loss_fn, step):
@@ -287,7 +286,6 @@ if __name__ == '__main__':
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description='Train FNO2d model on streamer discharge samples.')
     parser.add_argument('-i', '--input', type=str, required=True, help='Path to the YAML configuration file')
-    parser.add_argument('-l', '--wandb', action='store_true', help='Use Weights & Biases for logging')
     args = parser.parse_args()
 
     # Read the configuration file
