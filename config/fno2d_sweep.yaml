@@ -1,0 +1,53 @@
+program: main_fno2d_sweep.py
+name: sweep
+method: grid
+metric:
+  goal: minimize
+  name: valid_loss_full
+parameters:
+  input:
+    parameters:
+      feature: 
+        values: [e]
+      t_input:
+        values: [5]
+      T: 
+        values: [15]
+  training:
+    parameters:
+      batch_size:
+        values: [10]
+      epochs:
+        values: [10]
+      learning_rate:
+        values: [0.001]
+      loss:
+        values: [mae]
+      log_dir:
+        values: [logs/experiment]
+      model_name:
+        values: [fno2d]
+      step:
+        values: [1]
+  model:
+    parameters:
+      modes:
+        parameters:
+          mode1:
+            values: [32]
+          mode2:
+            values: [32]
+      width:
+        values: [40]
+      depth:
+        values: [4]
+      activation:
+        values: [relu]
+  data:
+    parameters:
+      directory:
+        values: [~/projects/data]
+      train_filename:
+        values: [dataset_128.h5]
+      valid_filename:
+        values: [dataset_128.h5]
