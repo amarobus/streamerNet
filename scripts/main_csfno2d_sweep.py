@@ -272,6 +272,20 @@ def plot_validation_results(y, pred, valid_loader, num_plots, idx, epoch):
     fig.update_layout(title_text=f'Epoch {epoch}: f:[0, {t_input}] -> [{t_input},{t_input+T}]')
     wandb.log({"Validation Plot (along r) 1D single Epoch": fig}, commit=False)
 
+    # Plot errors
+    fig = make_subplots(rows=1, cols=num_plots, subplot_titles=[f't + {i+1}' for i in range(num_plots)])
+    # pred = pred.cpu().numpy()
+    diff = torch.abs(y[idx] - pred[idx])
+    color_range = (diff.min().item(), diff.max().item())
+    for j in range(num_plots):
+        img = torch.abs(y[idx, ..., j] - pred[idx, ..., j])
+
+        fig.add_trace(go.Heatmap(z=img, colorscale='inferno', zmin=color_range[0], zmax=color_range[1], showscale= True if j==num_plots - 1 else False), row=1, col=j+1)
+
+    # Fig title
+    fig.update_layout(title_text=f'Epoch {epoch}: Error f:[0, {t_input}] -> [{t_input},{t_input+T}]')
+
+    wandb.log({"Validation Error Plot": fig}, commit=False)
 
 # Function to read the YAML configuration file
 def read_config(filepath):
