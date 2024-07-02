@@ -118,7 +118,7 @@ def train(model, train_loader, valid_loader, optimizer, scheduler, loss_fn, conf
         if valid_loss_full < best:
             best = valid_loss_full
             print(f'Saving best model with validation loss: {best}')
-            torch.save(model.state_dict(), f"checkpoints/{config['training']['model_name']}.pth")
+            torch.save(model.state_dict(), f"checkpoints/{config['training']['model_name']}_{wandb.run.id}.pth")
 
         # Validation plots and logs
         idx = 3
