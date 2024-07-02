@@ -7,6 +7,7 @@ import yaml
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import wandb
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from streamernet.datasets.streamer_dataset import StreamerDataset
 from streamernet.models import CSFNO2d
@@ -17,9 +18,9 @@ def main():
     wandb.init()
     config = wandb.config
     
-    model, train_loader, valid_loader, optimizer, loss_fn = setup(config)
+    model, train_loader, valid_loader, optimizer, scheduler, loss_fn = setup(config)
 
-    train(model, train_loader, valid_loader, optimizer, loss_fn, config)
+    train(model, train_loader, valid_loader, optimizer, scheduler, loss_fn, config)
 
     wandb.finish()
 
@@ -75,7 +76,8 @@ def setup(config):
     # Setting optimizer
     lr = config['training']['learning_rate']
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    print(config['training'])
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
+
     # Loss function
     if config['training']['loss'] == 'mse':
         loss_fn = torch.nn.MSELoss(reduction='sum')
@@ -88,10 +90,10 @@ def setup(config):
     else:
         raise ValueError(f"Loss function {config['training']['loss']} not supported.")
 
-    return model, train_loader, valid_loader, optimizer, loss_fn
+    return model, train_loader, valid_loader, optimizer, scheduler, loss_fn
 
 
-def train(model, train_loader, valid_loader, optimizer, loss_fn, config):
+def train(model, train_loader, valid_loader, optimizer, scheduler, loss_fn, config):
     
     best = np.inf
     T = train_loader.dataset.T
@@ -116,7 +118,7 @@ def train(model, train_loader, valid_loader, optimizer, loss_fn, config):
         train_loss_full /= ntrain
         valid_loss_step = valid_loss_step / nvalid / (T/step)
         valid_loss_full /= nvalid
-        print(f'Full Loss: {train_loss_full}, Step Loss: {train_loss_step}, Valid Full Loss: {valid_loss_full}, Valid Step Loss: {valid_loss_step}')
+        print(f'Full Loss: {train_loss_full}, Step Loss: {train_loss_step}, Valid Full Loss: {valid_loss_full}, Valid Step Loss: {valid_loss_step}, Learning Rate: {optimizer.param_groups[0]["lr"]}')
 
         # Save best model
         if valid_loss_full < best:
@@ -151,11 +153,13 @@ def train(model, train_loader, valid_loader, optimizer, loss_fn, config):
                 "train_loss_step": train_loss_step,
                 "valid_loss_full": valid_loss_full,
                 "valid_loss_step": valid_loss_step,
-                "epoch": epoch
+                "epoch": epoch,
+                "learning_rate": optimizer.param_groups[0]["lr"]
             },
             commit=True
         )
 
+        scheduler.step(valid_loss_full)
 
 def training_loop(model, train_loader, optimizer, loss_fn, step):
 
