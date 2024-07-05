@@ -1,0 +1,32 @@
+# Data paths
+data:
+  directory: ~/projects/data/1D
+  train_filename: sigma_phi_line_data.npz
+  valid_filename: sigma_phi_line_data.npz
+
+# Input configuration
+input:
+  features: ['sigma_z', 'phi_z']
+  t_input: 1
+  T: 19
+
+output:
+  features: ['sigma_z']
+
+# Training configuration
+training:
+  batch_size: 10
+  epochs: 1000
+  learning_rate: 0.001
+  log_dir: logs/experiment
+  loss: mae
+  model_name: fno1d
+  step: 1
+
+# Model configuration
+model:
+  modes:
+    modes: 8
+  width: 20
+  depth: 4
+  activation: relu  
