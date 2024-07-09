@@ -3,3 +3,4 @@ from .cylindrically_symmetric_spectral_conv import CylindricallySymmetricSpectra
 from .spectral_conv_1d import SpectralConv1d
 from .pad import Pad
 from .conv_block import ConvBlock
+from .down_conv_block import DownConvBlock
