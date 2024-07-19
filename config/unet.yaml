@@ -1,0 +1,31 @@
+# Data paths
+data:
+  directory: ~/projects/data/streamer_v0
+  train_filename: dataset_128.h5
+  valid_filename: dataset_128.h5
+
+# Input configuration
+input:
+  feature: 'e'
+  t_input: 5
+  T: 15
+
+# Training configuration
+training:
+  batch_size: 10
+  epochs: 1000
+  learning_rate: 0.001
+  log_dir: logs/experiment
+  loss: mae
+  model_name: unet
+  step: 1
+
+# Model configuration
+model:
+  filters: [32, 64, 128, 256]
+  width: 40
+  activation: relu  
+  kernel_size: 3
+  padding_type: ['same']
+  downsampling: max
+  upsampling: nearest
