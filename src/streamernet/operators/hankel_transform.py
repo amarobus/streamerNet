@@ -5,7 +5,7 @@ import numpy as np
 class HankelTransform:
     def __init__(self, n, R):
         self.R = R
-        zeros = sp.jn_zeros(0, n+1)
+        zeros = sp.jn_zeros(1, n+1)
         self.alpha = zeros[:-1]
         # 2 * np.pi * R * V = S
         self.S = zeros[-1]
@@ -15,9 +15,9 @@ class HankelTransform:
 
         j0 = sp.j0
         j1 = sp.j1
-        self.T = 2 * j0(self.alpha[...,None] * self.alpha[None,...] / self.S) / (np.abs(j1(self.alpha[...,None])) * np.abs(j1(self.alpha[None,...])) * self.S)
-        self.jr = np.abs(j1(self.alpha)) / self.R
-        self.jv = np.abs(j1(self.alpha)) / self.V
+        self.T = 2 * j0(self.alpha[...,None] * self.alpha[None,...] / self.S) / (np.abs(j0(self.alpha[...,None])) * np.abs(j0(self.alpha[None,...])) * self.S)
+        self.jr = np.abs(j0(self.alpha)) / self.R
+        self.jv = np.abs(j0(self.alpha)) / self.V
         self.w = self.S / self.R
 
         self.jr = self.jr[None,None,...,None]
